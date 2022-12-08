@@ -24,7 +24,10 @@ public class App {
                 .build();//и метод строительства
         try {
             //обращаемся к вспомогательному классу хибернате для того чтобы собрать нашу сессионфактори
-            sessionFactory = new MetadataSources(registry).buildMetadata().buildSessionFactory();
+            sessionFactory = new MetadataSources(registry)
+                    .addAnnotatedClass(Event.class)//указываем что мы сущность описали не с помощью XML а при помощи аннотированного класса
+                    .buildMetadata()
+                    .buildSessionFactory();
         } catch (Exception e) {
             //если что-то пошло не так то мы будем нашу сессионфактори просто выключать
             StandardServiceRegistryBuilder.destroy(registry);
