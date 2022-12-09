@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.GenericGenerator;
 
 import java.util.Date;
+import java.util.List;
 
 @Table(name = "EVENTS")//добавляем аннотацию таблица
 @Entity
@@ -12,6 +13,7 @@ public class Event {
     private Long id;
     private String title;
     private Date date;
+    private List<Participant> participantList;//добавляем поле ссылки на список участников
 
     //создаем дефолтный конструктор, конструктор с датой и названием, геттеры и сеттеры
     public Event() {
@@ -46,5 +48,14 @@ public class Event {
 
     public void setDate(Date date) {
         this.date = date;
+    }
+
+    @OneToMany(targetEntity = Participant.class)//указываем аннотацию один ко многим, т.е. событию могут соотвествовать несколько участников
+    public List<Participant> getParticipantList() {
+        return participantList;
+    }
+
+    public void setParticipantList(List<Participant> participantList) {
+        this.participantList = participantList;
     }
 }

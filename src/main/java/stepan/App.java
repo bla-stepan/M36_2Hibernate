@@ -6,12 +6,16 @@ import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import stepan.entity.Event;
+import stepan.entity.Participant;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
 /**
- * Hello world!
+ * В JPA есть понятие персистентная (persistence) сущность —
+ * сущность, связанная с её данными в БД, которая управляется текущей сессией (соединением).
  */
 public class App {
     public static void main(String[] args) {
@@ -26,6 +30,7 @@ public class App {
             //обращаемся к вспомогательному классу хибернате для того чтобы собрать нашу сессионфактори
             sessionFactory = new MetadataSources(registry)
                     .addAnnotatedClass(Event.class)//указываем что мы сущность описали не с помощью XML а при помощи аннотированного класса
+                    .addAnnotatedClass(Participant.class)//указываем аннотированный класс участника
                     .buildMetadata()
                     .buildSessionFactory();
         } catch (Exception e) {
@@ -58,9 +63,46 @@ public class App {
         }
         session.getTransaction().commit();//делаем коммит
         session.close();//закрываем сессию
+
+        //у нас уже есть одно событие, сделаем так, чтобы о него были участники
+        //для этого мы должны достать наше событие, проставить в него участников и потом попробовать получить
+        session = sessionFactory.openSession();//вызываем сессию
+        session.beginTransaction();//начинаем транзакцию
+        //получаем наше событие
+        Event event = session.load(Event.class, 1L);
+        //поскольку hbm не умеет сразу сохранять списки, нам предварительно необходимо сохранить всех наших участников
+        List<Participant> participants = getParticipants();
+        for (Participant participant : participants) {
+            session.save(participant);
+        }
+        //укажем наших участников
+        event.setParticipantList(participants);
+        //после сохранения участников мы можем обновить их в БД
+        session.save(event);
+        session.getTransaction().commit();//делаем коммит
+        //предварительно вытаскиваем нашу сущность
+        result = session.createQuery("from Event").list();//мы хотим вытащить все записи из таблицы event
+        //теперь пройдемся по нашему событию только в этот раз мы дополнительно выведем в консоль количество участников
+        for (Event event1 : (List<Event>) result) {
+            //печатаем результат
+            System.out.println("Событие (" + event1.getDate() + ") : " + event1.getTitle() + " участников события = " + event1.getParticipantList().size());
+        }
+        session.close();//закрываем сессию
         //закрываем сессионфактори предварительно проверить что она не nullв а то может выкинуть исключение
         if (sessionFactory != null) {
             sessionFactory.close();
         }
+    }
+
+    //создадим утилитный метод, который будет нам возвращать список участников participant
+    public static List<Participant> getParticipants() {
+        //будем возвразать массив как список наших участников
+        return Arrays.asList(
+                //с помощью конструктора создадим несколько участников
+                new Participant("Stepan", "Blandinskiy"),
+                new Participant("Fedor", "Loshenkov"),
+                new Participant("Ivan", "Ivanov"),
+                new Participant("Anna", "Fedotova")
+        );
     }
 }
