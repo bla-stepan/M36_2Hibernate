@@ -7,6 +7,7 @@ import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import stepan.entity.Event;
 import stepan.entity.Participant;
+import stepan.entity.Place;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,6 +32,7 @@ public class App {
             sessionFactory = new MetadataSources(registry)
                     .addAnnotatedClass(Event.class)//указываем что мы сущность описали не с помощью XML а при помощи аннотированного класса
                     .addAnnotatedClass(Participant.class)//указываем аннотированный класс участника
+                    .addAnnotatedClass(Place.class)
                     .buildMetadata()
                     .buildSessionFactory();
         } catch (Exception e) {
@@ -88,6 +90,38 @@ public class App {
             System.out.println("Событие (" + event1.getDate() + ") : " + event1.getTitle() + " участников события = " + event1.getParticipantList().size());
         }
         session.close();//закрываем сессию
+
+
+        //используем наш класс плэйс в нашем основном классе
+        //снова открываем сессию
+        session = sessionFactory.openSession();
+        session.beginTransaction();
+        Place place = new Place("Yaroslavl", "M. Proletarscaya", "3");
+        session.save(place);
+        //теперь перейдем в каласс Eventи добавим туда поле с плэйс
+        //теперь мы должны вытащить наше событие из базы
+        event = session.load(Event.class, 1L);
+        //через сеттер устанавливаем место для события
+        event.setPlace(place);
+        //теперь сохраняем
+        session.save(event);
+        session.getTransaction().commit();
+
+        //проходимся по списку и будем выводить дополнительно место
+        result = session.createQuery("from Event").list();
+        for (Event event1 : (List<Event>) result) {
+            //печатаем результат
+            System.out.println("Событие ("
+                    + event1.getDate()
+                    + ") : "
+                    + event1.getTitle()
+                    + " участников события = "
+                    + event1.getParticipantList().size()
+                    + " место события: " + event1.getPlace().getCity()
+            );
+        }
+        session.close();//закрываем сессию
+
         //закрываем сессионфактори предварительно проверить что она не nullв а то может выкинуть исключение
         if (sessionFactory != null) {
             sessionFactory.close();

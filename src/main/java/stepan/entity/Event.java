@@ -14,6 +14,7 @@ public class Event {
     private String title;
     private Date date;
     private List<Participant> participantList;//добавляем поле ссылки на список участников
+    private Place place;//добавляем место события
 
     //создаем дефолтный конструктор, конструктор с датой и названием, геттеры и сеттеры
     public Event() {
@@ -57,5 +58,14 @@ public class Event {
 
     public void setParticipantList(List<Participant> participantList) {
         this.participantList = participantList;
+    }
+
+    @OneToOne(targetEntity = Place.class)//каждому событию соотвествует только одно место
+    public Place getPlace() {
+        return place;
+    }
+
+    public void setPlace(Place place) {
+        this.place = place;
     }
 }
